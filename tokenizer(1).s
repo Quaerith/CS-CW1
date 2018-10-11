@@ -97,13 +97,23 @@ END_LOOP:
 	addi $t4, $0, 0			# iterating on tokens
 	la $s0, punctuations
 	la $s1, tokens
+	addi $s3, $0, 0			#null
+	
 	
 # $t1 and $t2 are flags to see if the read char changes from punctuation to alphabetic or vice versa
 # s2 holds the current char from content array
 
+reset_space: 
+	addi $t5, $0, 0			# counting number of consecutive spaces
+	j continue
+	
 verify_char: 
 	addi $t2, $t1, 0
 	lb $s2, content($t0)
+	beq $s2, $s3, main_end
+	bne $s2, 32, reset_space
+
+continue:
 	lb $t3, 0($s0)
 	beq $s2, $t3, punctuation
 	lb $t3, 1($s0)
@@ -115,19 +125,21 @@ verify_char:
 	
 alphabetic:
 	addi $t1, $0, 1
-	beq $s2, 32, new_line
+	beq $s2, 32, space
 	bne $t1, $t2, new_line
 	j print
 
 punctuation:
 	addi $t1, $0, 0
-	beq $s2, 32, new_line
+	beq $s2, 32, space
 	bne $t1, $t2, new_line
 	j print
 	
+space:
+	bgtz $t5, iterate
+	addi $t5, $t5, 1
+
 new_line:
-	addi $t5, $0, 1
-	#bnez $t5, iterate
 	la $v0, 4
 	la $a0, newline
 	syscall
@@ -140,7 +152,7 @@ iterate:
 	addi $t0, $t0, 1
 	beq $a0, 32, verify_char
 	syscall
-	beq $t0, 2049, main_end
+	#beq $t0, 2049, main_end
 	j verify_char
 	
 store:
