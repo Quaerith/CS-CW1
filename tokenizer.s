@@ -90,9 +90,10 @@ END_LOOP:
 
 # You can add your code here!
 
-	la $a1, content
-	la $a2, punctuations
-	li $s1, 0 			# initial tokens number
+	##la $a1, content
+	la $s2, punctuations
+	##li $s1, 0 			# initial tokens number
+	li $a0, 0
 	j tokenizer
 	
 	
@@ -100,7 +101,7 @@ output_tokens:
 	bnez $t0, print
 	li $v0, 11
 	syscall
-	la $t3, ($t4)
+	addi $t3, $t4, 0
 	j verify_char
 
 print: 
@@ -110,12 +111,12 @@ print:
 	j verify_char
 	
 new_line:
-	la $t3, ($t4)
-	la $t6, 0($a0)
+	addi $t3, $t4, 0
+	addi $t6, $a0, 0
 	la $a0, newline
 	li $v0, 11
 	syscall
-	la $a0, 0($t6)
+	addi $a0, $t6, 0
 	syscall	
 	j verify_char		
 	
@@ -129,13 +130,13 @@ verify_char:
 	li $t4, 0
 	lb $a0, content($t0)
 	beq $a0, '\0', main_end
-	lb $t5, 0($a2)
+	lb $t5, 0($s2)
 	beq $a0, $t5, punctuation
-	lb $t5, 1($a2)
+	lb $t5, 1($s2)
 	beq $a0, $t5, punctuation
-	lb $t5, 2($a2)
+	lb $t5, 2($s2)
 	beq $a0, $t5, punctuation
-	lb $t5, 3($a2)
+	lb $t5, 3($s2)
 	beq $a0, $t5, punctuation
 flag:	li $t4, 1
 	

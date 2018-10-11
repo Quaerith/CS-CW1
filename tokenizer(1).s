@@ -29,8 +29,10 @@ content:                .space 2049     # Maximun size of input_file + NULL
 
 
 # You can add your data here!
-
+punctuations: 		 .byte ',', '.', '!', '?'
 tokens : 		 .space 4198401 # Maximum size of tokens matrix
+
+
         
 #=========================================================================
 # TEXT SEGMENT  
@@ -89,12 +91,60 @@ END_LOOP:
 
 
 # You can add your code here!
-	la $s1, content
-	li $v0, 11
-	lb $a0, 0($s1)
+	
+	addi $t0, $0, 0			# iterating on content array
+	addi $t3, $0, 0			# verifying if punctuation
+	addi $t4, $0, 0			# iterating on tokens
+	la $s0, punctuations
+	la $s1, tokens
+	
+# $t1 and $t2 are flags to see if the read char changes from punctuation to alphabetic or vice versa
+# s2 holds the current char from content array
+
+verify_char: 
+	addi $t2, $t1, 0
+	lb $s2, content($t0)
+	lb $t3, 0($s0)
+	beq $s2, $t3, punctuation
+	lb $t3, 1($s0)
+	beq $s2, $t3, punctuation
+	lb $t3, 2($s0)
+	beq $s2, $t3, punctuation
+	lb $t3, 3($s0)
+	beq $s2, $t3, punctuation
+	
+alphabetic:
+	addi $t1, $0, 1
+	beq $s2, 32, new_line
+	bne $t1, $t2, new_line
+	j print
+
+punctuation:
+	addi $t1, $0, 0
+	beq $s2, 32, new_line
+	bne $t1, $t2, new_line
+	j print
+	
+new_line:
+	addi $t5, $0, 1
+	#bnez $t5, iterate
+	la $v0, 4
+	la $a0, newline
 	syscall
+	
+print:
+	la $v0, 11
+	lb $a0, content($t0)	
 
-
+iterate:
+	addi $t0, $t0, 1
+	beq $a0, 32, verify_char
+	syscall
+	beq $t0, 2049, main_end
+	j verify_char
+	
+store:
+	
         
         
 #------------------------------------------------------------------
