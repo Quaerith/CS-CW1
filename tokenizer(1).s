@@ -25,12 +25,12 @@ newline:                .asciiz  "\n"
 # Global variables in memory
 #-------------------------------------------------------------------------
 # 
-content:                .space 2049     # Maximun size of input_file + NULL
+content:                .space 2049                # Maximun size of input_file + NULL
 
 
 # You can add your data here!
 punctuations:          .byte ',', '.', '!', '?'    # Stores the possible punctuation marks as bytes
-tokens :          .space 4198401                    # Maximum size of tokens matrix
+tokens :               .space 4198401              # Maximum size of tokens matrix
 
 
         
@@ -38,6 +38,31 @@ tokens :          .space 4198401                    # Maximum size of tokens mat
 # TEXT SEGMENT  
 #=========================================================================
 .text
+
+
+#=========================================================================
+# MACROS
+#=========================================================================
+
+macros: 
+
+# prints a space on a new line
+
+  .macro printsln()
+    la   $v0, 4
+    la   $a0, newline
+    syscall
+    la   $v0, 11
+    addi $a0, $0, 32
+    syscall
+  .end_macro
+
+
+#=========================================================================
+# MACROS  
+#=========================================================================
+
+
 
 #-------------------------------------------------------------------------
 # MAIN code block
@@ -92,12 +117,12 @@ END_LOOP:
 
 # You can add your code here!
     
-    addi $t0, $0, 0            # will be used as a counter for iterating on content array
-    addi $t3, $0, 0            # will be used for storing each byte in the punctuation array
-    addi $t4, $0, 0            # iterating on tokens
-    la $s0, punctuations  # store
-    la $s1, tokens
-    addi $s3, $0, 0            #null
+    addi $t0, $0, 0                                   # will be used as a counter for iterating on content array
+    addi $t3, $0, 0                                   # will be used for storing each byte in the punctuation array
+    addi $t4, $0, 0                                   # iterating on tokens
+    la   $s0, punctuations                            # store 
+    la   $s1, tokens
+    addi $s3, $0, 0                                   #null
     
     
 # $t1 and $t2 are flags to see if the read char changes from punctuation to alphabetic or vice versa
@@ -105,70 +130,71 @@ END_LOOP:
 
 
 reset_space: 
-    addi $t5, $0, 0                                            #reseting the space counter
+    addi $t5, $0, 0                                 #reseting the space counter
     j continue                                                   
 
 # check the type of character (alphabetic, punctuation, space or null)
 
 verify_char: 
-    addi $t2, $t1, 0	                                      # update the code stored in $t2        
-    lb $s2, content($t0)                                  # s2 holds the current char from content array
-    beq $s2, $s3, main_end                          # check if you reached the end of the content array
-    bne $s2, 32, reset_space                        # check that the current character is not a space
-                                                                        # if so, reset the space counter
+    addi $t2, $t1, 0                                  # update the code stored in $t2        
+    lb   $s2, content($t0)                            # s2 holds the current char from content array
+    beq  $s2, $s3, main_end                           # check if you reached the end of the content array
+    bne  $s2, 32, reset_space                         # check that the current character is not a space
+                                                      # if so, reset the space counter
 
 # compare the current character with the punctuation marks (stored in the first 4 bytes of $s0)
 # if so, jump to the punctuation label
 # otherwise, continue to the alphabetic label
 
 continue:
-    lb $t3, 0($s0)
-    beq $s2, $t3, punctuation
-    lb $t3, 1($s0)
-    beq $s2, $t3, punctuation
-    lb $t3, 2($s0)
-    beq $s2, $t3, punctuation
-    lb $t3, 3($s0)
-    beq $s2, $t3, punctuation
+    lb   $t3, 0($s0)
+    beq  $s2, $t3, punctuation
+    lb   $t3, 1($s0)
+    beq  $s2, $t3, punctuation
+    lb   $t3, 2($s0)
+    beq  $s2, $t3, punctuation
+    lb   $t3, 3($s0)
+    beq  $s2, $t3, punctuation
+
 
 alphabetic:
-    addi $t1, $0, 1                                            # the code for an alphabetic character is 1                                   
-    beq $s2, 32, space                                    # jump to the space label if the current character is a space
-    bne $t1, $t2, new_line                              # jump to the new_line label if the preceding character was a punctuation mark
-    j print                                                          # otherwise just print the character next to the previous one
+    addi $t1, $0, 1                                   # the code for an alphabetic character is 1                                   
+    beq  $s2, 32, space                               # jump to the space label if the current character is a space
+    bne  $t1, $t2, new_line                           # jump to the new_line label if the preceding character was a punctuation mark
+    j print                                           # otherwise just print the character next to the previous one
+
 
 punctuation:
-    addi $t1, $0, 0                                            # the code for a punctuation mark is 0
-    beq $s2, 32, space                                    # jump to space label if the current character is a space
-    bne $t1, $t2, new_line                              # jump to the new_line label if the preceding character was an alphabetic one
-    j print                                                          # otherwise just print the character next to the previous one
+    addi $t1, $0, 0                                   # the code for a punctuation mark is 0
+    beq  $s2, 32, space                               # jump to space label if the current character is a space
+    bne  $t1, $t2, new_line                           # jump to the new_line label if the preceding character was an alphabetic one
+    j print                                           # otherwise just print the character next to the previous one
     
 
-
 space:
-    bgtz $t5, iterate                                        # if you have two or more consecutive spaces jump to iterate
-	                                                                     # this way you avoid printing two consecutive newlines
-    addi $t5, $t5, 1                                          # turn the counter to 1 
-
+    bgtz $t5, iterate                                 # if you have two or more consecutive spaces jump to iterate
+                                                      # this way you avoid printing two (or more) consecutive newlines
+    addi $t5, $t5, 1                                  # turn the counter to 1 
+    printsln()
+    
 # prints a new line
 
 new_line:
-    la $v0, 4
-    la $a0, newline
+    la   $v0, 4
+    la   $a0, newline
     syscall
 
 # prints a character (eventually)
 
 print:
-    la $v0, 11
-    lb $a0, content($t0)    
+    la   $v0, 11
+    lb   $a0, content($t0)    
 
 iterate:
-    addi $t0, $t0, 1                                        # iterates here
-    beq $a0, 32, verify_char                        # if the character is a space go back to verify the next character in the array
-    syscall                                                       # prints the character here
-    #beq $t0, 2049, main_end
-    j verify_char                                             # jump back to verify the next character in the array
+    addi $t0, $t0, 1                                  # iterates here
+    beq  $a0, 32, verify_char                         # if the character is a space go back to verify the next character in the array
+    syscall                                           # prints the character here
+    j verify_char                                     # jump back to verify the next character in the array
     
 store:
     
