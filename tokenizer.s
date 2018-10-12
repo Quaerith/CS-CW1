@@ -59,7 +59,7 @@ macros:
 
 
 #=========================================================================
-# MACROS  
+# END_MACROS
 #=========================================================================
 
 
@@ -120,9 +120,9 @@ END_LOOP:
     addi $t0, $0, 0                                   # will be used as a counter for iterating on content array
     addi $t3, $0, 0                                   # will be used for storing each byte in the punctuation array
     addi $t4, $0, 0                                   # iterating on tokens
-    la   $s0, punctuations                            # store 
-    la   $s1, tokens
-    addi $s3, $0, 0                                   #null
+    la   $s0, punctuations                            # store punctuations array address in $s0
+    la   $s1, tokens                                  # store tokens array
+    addi $s3, $0, 0                                   # store null character
     
     
 # $t1 and $t2 are flags to see if the read char changes from punctuation to alphabetic or vice versa
@@ -130,7 +130,7 @@ END_LOOP:
 
 
 reset_space: 
-    addi $t5, $0, 0                                 #reseting the space counter
+    addi $t5, $0, 0                                   # reseting the space counter
     j continue                                                   
 
 # check the type of character (alphabetic, punctuation, space or null)
