@@ -56,6 +56,36 @@ macros:
     addi $a0, $0, 32
     syscall
   .end_macro
+  
+# prints a space
+
+  .macro prints()
+    la   $v0, 11
+    addi $a0, $0, 32
+    syscall
+  .end_macro
+
+# prints a newline
+    
+  .macro println()
+    la $v0, 4
+    la $a0, newline
+    syscall
+  .end_macro
+  
+# prints n spaces on a newline
+
+  .macro printsnln()
+    beqz $t5, continue
+    println()
+    loop:
+    prints()
+    addi $t5, $t5, -1
+    beqz $t5, end
+    j loop
+    end: println()
+  .end_macro
+  
 
 
 #=========================================================================
@@ -128,8 +158,10 @@ END_LOOP:
 # $t1 and $t2 are flags to see if the read char changes from punctuation to alphabetic or vice versa
 # $t1 holds the code for the current character
 
+    j verify_char
 
 reset_space: 
+    printsnln()
     addi $t5, $0, 0                                   # reseting the space counter
     j continue                                                   
 
@@ -172,25 +204,19 @@ punctuation:
     
 
 space:
-    bgtz $t5, iterate                                 # if you have two or more consecutive spaces jump to iterate
-                                                      # this way you avoid printing two (or more) consecutive newlines
-    addi $t5, $t5, 1                                  # turn the counter to 1 
-    printsln()
+    addi $t5, $t5, 1                                  # update the space counter
+    j print
     
 # prints a new line
 
 new_line:
-    la   $v0, 4
-    la   $a0, newline
-    syscall
+    println()
 
 # prints a character (eventually)
 
 print:
     la   $v0, 11
-    lb   $a0, content($t0)    
-
-iterate:
+    lb   $a0, content($t0) 
     addi $t0, $t0, 1                                  # iterates here
     beq  $a0, 32, verify_char                         # if the character is a space go back to verify the next character in the array
     syscall                                           # prints the character here
