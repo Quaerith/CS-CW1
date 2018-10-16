@@ -69,26 +69,7 @@ int match[2049];
 
 // Appends a '_' to the beginning and the end of an n-character string
 
-void append(int t, int c) {
-	int j = 1;
-	int n = c;
-	// print_int(n);
-	char temp[c + 3];
-	temp[0] = '_';
-	temp[c + 2] = '_';
-	output(temp);
-	print_int(c);
 
-	while (c > 0) {
-		temp[j] = tokens[t][j - 1];
-		++j;
-		--c;
-	}
-	for (j = 0; j < n + 3; ++j) {
-		tokens[t][j] = temp[j];
-	}
-	
-}
 
 // Task B
 void spell_checker() {
@@ -105,42 +86,43 @@ void spell_checker() {
 
 	  // match[t] is 1 if the token doesn't match any word in the dictionary
 	  // match[t] is 0 if the token matches a word in the dictionary
-	  //match[t] = 1;
+	  
 
-	  if (tokens[t][c] >= 'A' && tokens[t][c] <= 'Z' || tokens[t][c] >= 'a' && tokens[t][c] <= 'z') {
-		  do {
-			  if (dictionary[i] == '\n') {
-				  ++i;
+	  if (tokens[t][c] >= 'A' && tokens[t][c] <= 'Z' || tokens[t][c] >= 'a' && tokens[t][c] <= 'z') {        // checks if the first character of the token t is alphabetic
+		  do { 
+			  if (dictionary[i] == '\n') {                                                                   // sets dictionary[i] to be the next character after a newline                                                                    
+				  ++i;                                                                                       // meaning the first character of the next word
 			  }
-			  if (tokens[t][c] == '\0' && dictionary[i] != '\n') {
-				  match[t] = 1;
+
+			  if (dictionary[i] == '\0') {                                                                   // if you reach the end of the dictionary you exit the loop
 				  break;
 			  }
-			  if (dictionary[i] == '\0') {
-				  break;
-			  }
-			  if (tokens[t][c] == dictionary[i] || tokens[t][c] == dictionary[i] - 32) {
-				  ++i;
-				  ++c;
-				  match[t] = 0;
+			  if (tokens[t][c] == dictionary[i] || tokens[t][c] == dictionary[i] - 32) {                     // checks to see if the character c of token t matches the character i of the dictionary
+				  ++i;                                                                                       // if that's the case, prepare to check the next character
+				  ++c;                                                                                       // of the token t against the next character of dictionary
+				  match[t] = 0;                                                                              // consider it's a match for now
 			  }
 			  else do {
-				  c = 0;
-				  match[t] = 1;
-				  ++i;
-			  } while (dictionary[i] != '\n');
+				  c = 0;                                                                                     // if that's not the case, return to the first character of token t
+				  match[t] = 1;                                                                              // reset the match value to 1 (it doesn't match any previous word from dictionary)
+				  ++i;                                                                                       // advance one character in dictionary
+			  } while (dictionary[i] != '\n');                                                               // keep advancing until you reach a newline (meaning a new word)
 			  
 			  
-			  if (tokens[t][c] == '\0' && dictionary[i] != '\n') {
-				  match[t] = 1;
-			  }
+			  if (tokens[t][c] == '\0' && dictionary[i] != '\n') {                                           // if the token t is shorter that the dictionary word
+				  match[t] = 1;                                                                              // reset the match value
+				  c = 0;                                                                                     // start checking again from the first character of token t
+			  }                                                                                              // this is done so that a substring of a dictionary word isn't considered a match
+			                                                                                                 
 
-		  } while (tokens[t][c] != '\0');
+		  } while (tokens[t][c] != '\0');                                                                    // keep checking for a match in the dictionary
+		                                                                                                     // until you reach the end of the token t
 		  
 		  
 
 	  }
-	  else match[t] = 0;
+	  else match[t] = 0;                                                                                     // if the token t isn't alphabetic, consider it to be a match
+	                                                                                                         // so that punctuation marks and spaces are not separated with the '_'s
 
   }
   return;
@@ -149,9 +131,9 @@ void spell_checker() {
 // Task B
 void output_tokens() {
 
-	int i;
+	int i;	
 
-	
+	// print out the tokens and isolate the ones that are not in the dictionary
 
 	for (i = 0; i < tokens_number; ++i) {
 		if (match[i] == 0)
@@ -164,9 +146,7 @@ void output_tokens() {
 			print_char('_');
 		}
 
-		//output(" ");
 	}
-	//print_int(match);
 
 	return;
 }
