@@ -57,6 +57,7 @@ char tokens[MAX_INPUT_SIZE + 1][MAX_INPUT_SIZE + 1];
 int tokens_number = 0;
 // content of dictionary file
 char dictionary[MAX_DICTIONARY_WORDS * MAX_WORD_SIZE + 1];
+char token[MAX_WORD_SIZE + 1];
 
 ///////////////////////////////////////////////////////////////////////////////
 /////////////// Do not modify anything above
@@ -64,16 +65,106 @@ char dictionary[MAX_DICTIONARY_WORDS * MAX_WORD_SIZE + 1];
 
 // You can define your global variables here!
 
+int match[2049];
+
+// Appends a '_' to the beginning and the end of an n-character string
+
+void append(int t, int c) {
+	int j = 1;
+	int n = c;
+	// print_int(n);
+	char temp[c + 3];
+	temp[0] = '_';
+	temp[c + 2] = '_';
+	output(temp);
+	print_int(c);
+
+	while (c > 0) {
+		temp[j] = tokens[t][j - 1];
+		++j;
+		--c;
+	}
+	for (j = 0; j < n + 3; ++j) {
+		tokens[t][j] = temp[j];
+	}
+	
+}
+
 // Task B
 void spell_checker() {
-  // TODO Please implement me!
+
+  // t is the token number
+  int t = 0;
+
+  // c is the current character of the token
+  int c = 0;
+
+  // i is the index of the current character of the dictionary
+  int i = 0;
+
+  // match[t] is 1 if the token doesn't match any word in the dictionary
+  // match[t] is 0 if the token matches a word in the dictionary
+  match[t] = 1;
+
+  if (tokens[t][c] >= 'A' && tokens[t][c] <= 'Z' || tokens[t][c] >= 'a' && tokens[t][c] <= 'z') {
+	  do {
+		  if (dictionary[i] == '\n') {
+			  ++i;
+		  }
+		  if (dictionary[i] == '\0') {
+			  break;
+		  }
+		  if (tokens[t][c] == dictionary[i] || tokens[t][c] == dictionary[i] - 32) {
+			  ++i;
+			  ++c;
+			  match[t] = 0;
+		  }
+		  else do {
+			  c = 0;
+			  match[t] = 1;
+			  ++i;
+		  } while (dictionary[i] != '\n');
+
+	  } while (tokens[t][c] != '\0' && dictionary[i] != '\n');
+	  c = 0;
+	  while (tokens[t][c] != '\0') {
+		  ++c;
+	  }
+	 // if (match == 0) {
+		//  append(t, c);
+
+	 // }
+  
+}
+  else match[t] = 0;
+  
+
   return;
 }
 
 // Task B
 void output_tokens() {
-  // TODO Please implement me!
-  return;
+
+	int i;
+
+	
+
+	for (i = 0; i < tokens_number; ++i) {
+		if (match[i] == 0)
+
+		    output(tokens[i]);
+
+		else {
+			print_char('_');
+			output(tokens[i]);
+			print_char('_');
+		}
+
+		//output(" ");
+	}
+	//print_int(match);
+
+	return;
 }
 
 //---------------------------------------------------------------------------
