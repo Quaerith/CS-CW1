@@ -94,51 +94,55 @@ void append(int t, int c) {
 void spell_checker() {
 
   // t is the token number
-  int t = 0;
+  int t;
+  for (t = 0; t < tokens_number; t++) {
 
-  // c is the current character of the token
-  int c = 0;
+	  // c is the current character of the token
+	  int c = 0;
 
-  // i is the index of the current character of the dictionary
-  int i = 0;
+	  // i is the index of the current character of the dictionary
+	  int i = 0;
 
-  // match[t] is 1 if the token doesn't match any word in the dictionary
-  // match[t] is 0 if the token matches a word in the dictionary
-  match[t] = 1;
+	  // match[t] is 1 if the token doesn't match any word in the dictionary
+	  // match[t] is 0 if the token matches a word in the dictionary
+	  //match[t] = 1;
 
-  if (tokens[t][c] >= 'A' && tokens[t][c] <= 'Z' || tokens[t][c] >= 'a' && tokens[t][c] <= 'z') {
-	  do {
-		  if (dictionary[i] == '\n') {
-			  ++i;
-		  }
-		  if (dictionary[i] == '\0') {
-			  break;
-		  }
-		  if (tokens[t][c] == dictionary[i] || tokens[t][c] == dictionary[i] - 32) {
-			  ++i;
-			  ++c;
-			  match[t] = 0;
-		  }
-		  else do {
-			  c = 0;
-			  match[t] = 1;
-			  ++i;
-		  } while (dictionary[i] != '\n');
+	  if (tokens[t][c] >= 'A' && tokens[t][c] <= 'Z' || tokens[t][c] >= 'a' && tokens[t][c] <= 'z') {
+		  do {
+			  if (dictionary[i] == '\n') {
+				  ++i;
+			  }
+			  if (tokens[t][c] == '\0' && dictionary[i] != '\n') {
+				  match[t] = 1;
+				  break;
+			  }
+			  if (dictionary[i] == '\0') {
+				  break;
+			  }
+			  if (tokens[t][c] == dictionary[i] || tokens[t][c] == dictionary[i] - 32) {
+				  ++i;
+				  ++c;
+				  match[t] = 0;
+			  }
+			  else do {
+				  c = 0;
+				  match[t] = 1;
+				  ++i;
+			  } while (dictionary[i] != '\n');
+			  
+			  
+			  if (tokens[t][c] == '\0' && dictionary[i] != '\n') {
+				  match[t] = 1;
+			  }
 
-	  } while (tokens[t][c] != '\0' && dictionary[i] != '\n');
-	  c = 0;
-	  while (tokens[t][c] != '\0') {
-		  ++c;
+		  } while (tokens[t][c] != '\0');
+		  
+		  
+
 	  }
-	 // if (match == 0) {
-		//  append(t, c);
+	  else match[t] = 0;
 
-	 // }
-  
-}
-  else match[t] = 0;
-  
-
+  }
   return;
 }
 
