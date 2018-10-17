@@ -32,11 +32,43 @@ dictionary:             .space 200001   # Maximum number of words in dictionary 
                                         # maximum size of each word + NULL
 
 # You can add your data here!
+
+token:                  .space 2049 
         
 #=========================================================================
 # TEXT SEGMENT  
 #=========================================================================
 .text
+
+
+#=========================================================================
+# MACROS
+#=========================================================================
+
+_macros:
+
+     .macro print_token()
+        li $v0, 4
+        la $a0, token
+        syscall
+     .end_macro     
+     
+     .macro mark()
+        li $v0, 11
+        lb $a0, 95
+        syscall
+        print_token()
+        li $v0, 11
+        lb $a0, 95
+        syscall
+     .end_macro
+
+
+
+#=========================================================================
+# END_MACROS
+#=========================================================================
+
 
 #-------------------------------------------------------------------------
 # MAIN code block
@@ -130,7 +162,45 @@ END_LOOP2:
 
 # You can add your code here!
 
+# Main idea: if the token is a word, store it in the token array and check against dictionary
+# Consider all other characters between two words a token and just print it out
+# Try extracting each word from the dictionary and doing an xor with the alphabetic token
+# Don't forget to empty the token array before repopulating it
+
+        addi $t0, $0, 0                # iterates on content
+        addi $t1, $0, 0                # iterates on token
+        addi $t4, $0, 0                # iterates on dictionary
         
+verify_char:
+        lb   $t3, content($t0)
+        beqz $t3, main_end
+        blt  $t3, 65, punctuation
+        beq  $t2, 0, print
+        
+alphabetic:
+        sb   $t3, token($t1)
+        addi $t1, $t1, 1
+        addi $t0, $t0, 1
+        lb   $t3, content($t0)
+        blt  $t3, 65, spell_check
+        j verify_char 
+
+punctuation:
+        sb   $t3, token($t1)
+        addi $t1, $t1, 1
+        addi $t0, $t0, 1
+        addi $t2, $0, 0
+        j verify_char
+
+print:
+        print_token()
+        addi $t1, $0, 0
+        addi $t2, $0, 1
+        j verify_char
+
+spell_check:
+        lb   $t5, dictionary($t4)
+        beqz $t5, verify_char        
         
 #------------------------------------------------------------------
 # Exit, DO NOT MODIFY THIS BLOCK

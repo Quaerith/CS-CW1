@@ -30,7 +30,7 @@ content:                .space 2049                # Maximun size of input_file 
 
 # You can add your data here!
 punctuations:          .byte ',', '.', '!', '?'    # Stores the possible punctuation marks as bytes
-tokens :               .space 4198401              # Maximum size of tokens matrix
+
 
 
         
@@ -222,7 +222,7 @@ print:
     syscall                                           # prints the character here
     j verify_char                                     # jump back to verify the next character in the array
     
-store:
+
     
         
         
