@@ -34,8 +34,8 @@ dictionary:             .space 200001   # Maximum number of words in dictionary 
 # You can add your data here!
 
 token:                  .space 2049     # Maximum token size
-tokens:                 .space 327841   # Maximum number of tokens
-punctuations:          .byte ',', '.', '!', '?'    # Stores the possible punctuation marks as bytes
+tokens:                 .space 411849   # Maximum number of tokens
+punctuations:           .byte ',', '.', '!', '?'    # Stores the possible punctuation marks as bytes
 
         
 #=========================================================================
@@ -77,8 +77,8 @@ _macros:
 # starts populating the next "line" of tokens array
     
   .macro println()
+    mul  $t4, $t6, 201
     addi $t6, $t6, 1
-    mul  $t4, $t6, 160
   .end_macro
   
 # populates a "line" of tokens with n spaces
@@ -86,12 +86,15 @@ _macros:
   .macro printsnln()
     beqz $t5, continue
     println()
+    addi $s4, $s4, 1                                  # tokens number increases
     loop:
     prints()
     addi $t5, $t5, -1
     beqz $t5, end
     j loop
-    end: println()
+    end: 
+    println()
+    addi $s4, $s4, 1                                  # tokens number increases
   .end_macro
 
 
@@ -207,6 +210,7 @@ END_LOOP2:
     la   $s0, punctuations                            # store punctuations array address in $s0
     la   $s1, tokens                                  # store tokens array
     addi $s3, $0, 0                                   # store null character
+    addi $s4, $0, 0                                   # will hold the number of tokens
     
     
 # $t1 and $t2 are flags to see if the read char changes from punctuation to alphabetic or vice versa
@@ -224,7 +228,7 @@ reset_space:
 verify_char: 
     addi $t2, $t1, 0                                  # update the code stored in $t2        
     lb   $s2, content($t0)                            # s2 holds the current char from content array
-    beq  $s2, $s3, main_end                           # check if you reached the end of the content array
+    beq  $s2, $s3, spell_check                        # check if you reached the end of the content array
     bne  $s2, 32, reset_space                         # check that the current character is not a space
                                                       # if so, reset the space counter
 
@@ -264,22 +268,25 @@ space:
 # prints a "new line" in the tokens array
 
 new_line:
+    mul  $t4, $t6, 201
     addi $t6, $t6, 1
-    mul  $t4, $t6, 160
+    addi $s4, $s4, 1
 
-# prints a character (eventually)
+# stores a character in tokens array (eventually)
 
 store:
     lb   $a0, content($t0) 
     addi $t0, $t0, 1                                  # iterates content here
     
     beq  $a0, 32, verify_char                         # if the character is a space go back to verify the next character in the array
-    sb   $a0, tokens($t4)
+    sb   $a0, tokens($t4)                             # stores character here
     addi $t4, $t4, 1                                  # iterates tokens array here
     j verify_char                                     # jump back to verify the next character in the content array
     
 spell_check:
-          
+   li   $v0, 4
+   la   $a0, tokens+402
+   syscall       
         
 #------------------------------------------------------------------
 # Exit, DO NOT MODIFY THIS BLOCK

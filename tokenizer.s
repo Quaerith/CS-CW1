@@ -210,6 +210,7 @@ space:
 # prints a new line
 
 new_line:
+    beqz $t0, print
     println()
 
 # prints a character (eventually)
