@@ -1,8 +1,8 @@
 
 #=========================================================================
-# Tokenizer
+# Spell checker 
 #=========================================================================
-# Split a string into alphabetic, punctuation and space tokens
+# Marks misspelled words in a sentence according to a dictionary
 # 
 # Inf2C Computer Systems
 # 
@@ -18,20 +18,24 @@
 # Constant strings
 #-------------------------------------------------------------------------
 
-input_file_name:        .asciiz  "input.txt"   
+input_file_name:        .asciiz  "input.txt"
+dictionary_file_name:   .asciiz  "dictionary.txt"
 newline:                .asciiz  "\n"
         
 #-------------------------------------------------------------------------
 # Global variables in memory
 #-------------------------------------------------------------------------
 # 
-content:                .space 2049                # Maximun size of input_file + NULL
-
+content:                .space 2049     # Maximun size of input_file + NULL
+.align 4                                # The next field will be aligned
+dictionary:             .space 200001   # Maximum number of words in dictionary *
+                                        # maximum size of each word + NULL
 
 # You can add your data here!
+
+token:                  .space 2049     # Maximum token size
+tokens:                 .space 327841   # Maximum number of tokens
 punctuations:          .byte ',', '.', '!', '?'    # Stores the possible punctuation marks as bytes
-
-
 
         
 #=========================================================================
@@ -44,36 +48,40 @@ punctuations:          .byte ',', '.', '!', '?'    # Stores the possible punctua
 # MACROS
 #=========================================================================
 
-macros: 
+_macros:
 
-# prints a space on a new line
+     .macro print_token()
+        li $v0, 4
+        la $a0, token
+        syscall
+     .end_macro     
+     
+     .macro mark()
+        li $v0, 11
+        lb $a0, 95
+        syscall
+        print_token()
+        li $v0, 11
+        lb $a0, 95
+        syscall
+     .end_macro
 
-  .macro printsln()
-    la   $v0, 4
-    la   $a0, newline
-    syscall
-    la   $v0, 11
-    addi $a0, $0, 32
-    syscall
-  .end_macro
-  
-# prints a space
-
+# loads a space into a byte of tokens array
+          
   .macro prints()
-    la   $v0, 11
     addi $a0, $0, 32
-    syscall
+    sb   $a0, tokens($t4)
+    addi $t4, $t4, 1
   .end_macro
-
-# prints a newline
+     
+# starts populating the next "line" of tokens array
     
   .macro println()
-    la $v0, 4
-    la $a0, newline
-    syscall
+    addi $t6, $t6, 1
+    mul  $t4, $t6, 160
   .end_macro
   
-# prints n spaces on a newline
+# populates a "line" of tokens with n spaces
 
   .macro printsnln()
     beqz $t5, continue
@@ -85,13 +93,13 @@ macros:
     j loop
     end: println()
   .end_macro
-  
+
+
 
 
 #=========================================================================
 # END_MACROS
 #=========================================================================
-
 
 
 #-------------------------------------------------------------------------
@@ -101,7 +109,6 @@ macros:
 .globl main                     # Declare main label to be globally visible.
                                 # Needed for correct operation with MARS
 main:
-        
 #-------------------------------------------------------------------------
 # Reading file block. DO NOT MODIFY THIS BLOCK
 #-------------------------------------------------------------------------
@@ -116,7 +123,7 @@ main:
         
         move $s0, $v0                   # save the file descriptor 
 
-# reading from file just opened
+        # reading from file just opened
 
         move $t0, $0                    # idx = 0
 
@@ -134,24 +141,71 @@ READ_LOOP:                              # do {
         addi $t0, $t0, 1                # idx += 1
         j    READ_LOOP
 END_LOOP:
-        sb   $0,  content($t0)
+        sb   $0,  content($t0)          # content[idx] = '\0'
+
+        # Close the file 
 
         li   $v0, 16                    # system call for close file
         move $a0, $s0                   # file descriptor to close
         syscall                         # fclose(input_file)
+
+
+        # opening file for reading
+
+        li   $v0, 13                    # system call for open file
+        la   $a0, dictionary_file_name  # input file name
+        li   $a1, 0                     # flag for reading
+        li   $a2, 0                     # mode is ignored
+        syscall                         # fopen(dictionary_file, "r")
+        
+        move $s0, $v0                   # save the file descriptor 
+
+        # reading from file just opened
+
+        move $t0, $0                    # idx = 0
+
+READ_LOOP2:                             # do {
+        li   $v0, 14                    # system call for reading from file
+        move $a0, $s0                   # file descriptor
+                                        # dictionary[idx] = c_input
+        la   $a1, dictionary($t0)       # address of buffer from which to read
+        li   $a2,  1                    # read 1 char
+        syscall                         # c_input = fgetc(dictionary_file);
+        blez $v0, END_LOOP2             # if(feof(dictionary_file)) { break }
+        lb   $t1, dictionary($t0)               
+        lb   $t1, dictionary($t0)               
+        beq  $t1, $0,  END_LOOP2        # if(c_input == '\n')
+        addi $t0, $t0, 1                # idx += 1
+        j    READ_LOOP2
+END_LOOP2:
+        sb   $0,  dictionary($t0)       # dictionary[idx] = '\0'
+
+        # Close the file 
+
+        li   $v0, 16                    # system call for close file
+        move $a0, $s0                   # file descriptor to close
+        syscall                         # fclose(dictionary_file)
 #------------------------------------------------------------------
 # End of reading file block.
 #------------------------------------------------------------------
 
 
 
+
 # You can add your code here!
-    
+
+# Main idea: if the token is a word, store it in the token array and check against dictionary
+# Consider all other characters between two words a token and just print it out
+# Try extracting each word from the dictionary and doing an xor with the alphabetic token
+# Don't forget to empty the token array before repopulating it
+# 160 bits allocated per token
+
     addi $t0, $0, 0                                   # will be used as a counter for iterating on content array
     addi $t3, $0, 0                                   # will be used for storing each byte in the punctuation array
-    addi $t4, $0, 0                                   # iterating on tokens
+    addi $t4, $0, 0                                   # iterating on "lines" of tokens
+    addi $t6, $0, 0                                   # iterating on "columns" of tokens
     la   $s0, punctuations                            # store punctuations array address in $s0
-    #la   $s1, tokens                                  # store tokens array
+    la   $s1, tokens                                  # store tokens array
     addi $s3, $0, 0                                   # store null character
     
     
@@ -193,38 +247,39 @@ alphabetic:
     addi $t1, $0, 1                                   # the code for an alphabetic character is 1                                   
     beq  $s2, 32, space                               # jump to the space label if the current character is a space
     bne  $t1, $t2, new_line                           # jump to the new_line label if the preceding character was a punctuation mark
-    j print                                           # otherwise just print the character next to the previous one
+    j store                                           # otherwise just print the character next to the previous one
 
 
 punctuation:
     addi $t1, $0, 0                                   # the code for a punctuation mark is 0
     beq  $s2, 32, space                               # jump to space label if the current character is a space
     bne  $t1, $t2, new_line                           # jump to the new_line label if the preceding character was an alphabetic one
-    j print                                           # otherwise just print the character next to the previous one
+    j store                                           # otherwise just print the character next to the previous one
     
 
 space:
     addi $t5, $t5, 1                                  # update the space counter
-    j print
+    j store
     
-# prints a new line
+# prints a "new line" in the tokens array
 
 new_line:
-    println()
+    addi $t6, $t6, 1
+    mul  $t4, $t6, 160
 
 # prints a character (eventually)
 
-print:
-    la   $v0, 11
+store:
     lb   $a0, content($t0) 
-    addi $t0, $t0, 1                                  # iterates here
+    addi $t0, $t0, 1                                  # iterates content here
+    
     beq  $a0, 32, verify_char                         # if the character is a space go back to verify the next character in the array
-    syscall                                           # prints the character here
-    j verify_char                                     # jump back to verify the next character in the array
+    sb   $a0, tokens($t4)
+    addi $t4, $t4, 1                                  # iterates tokens array here
+    j verify_char                                     # jump back to verify the next character in the content array
     
-
-    
-        
+spell_check:
+          
         
 #------------------------------------------------------------------
 # Exit, DO NOT MODIFY THIS BLOCK

@@ -33,7 +33,8 @@ dictionary:             .space 200001   # Maximum number of words in dictionary 
 
 # You can add your data here!
 
-token:                  .space 2049 
+token:                  .space 2049     # Maximum token size
+tokens:                 .space 200001   # Maximum number of tokens
         
 #=========================================================================
 # TEXT SEGMENT  
@@ -170,12 +171,13 @@ END_LOOP2:
         addi $t0, $0, 0                # iterates on content
         addi $t1, $0, 0                # iterates on token
         addi $t4, $0, 0                # iterates on dictionary
+       
         
 verify_char:
-        lb   $t3, content($t0)
-        beqz $t3, main_end
-        blt  $t3, 65, punctuation
-        beq  $t2, 0, print
+        lb   $t3, content($t0)         # loads content character in $t3
+        beqz $t3, main_end             # if the current character is 0, jump to end
+        blt  $t3, 65, punctuation      # checks if the character is a punctuation and jumps to label if that is the case
+        beq  $t2, 0, print             # if the character switches from alphabetic to punctuation then go to print
         
 alphabetic:
         sb   $t3, token($t1)
@@ -184,6 +186,7 @@ alphabetic:
         lb   $t3, content($t0)
         blt  $t3, 65, spell_check
         j verify_char 
+        
 
 punctuation:
         sb   $t3, token($t1)
