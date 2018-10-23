@@ -35,6 +35,7 @@ dictionary:             .space 200001   # Maximum number of words in dictionary 
 
 token:                  .space 2049     # Maximum token size
 tokens:                 .space 411849   # Maximum number of tokens
+match:                  .space 2049     # Each element is 1 or 0, depending on the token matching a word in the dictionary
 punctuations:           .byte ',', '.', '!', '?'    # Stores the possible punctuation marks as bytes
 
         
@@ -108,9 +109,64 @@ _macros:
 #-------------------------------------------------------------------------
 # MAIN code block
 #-------------------------------------------------------------------------
+do1:
+    beqz $t4, jump
+    beqz $t5, jump
+    bne  $t5, 10, do1_1
+    addi $t2, $t2, 1
+    lb   $t5, dictionary($t2)
+    
+do1_1:
+    bne  $t4, $t5, do1_2       # if (tokens[t][c] == dictionary[i]) {
+    addi $t2, $t2, 1           #   ++i;
+    lb   $t5, dictionary($t2)
+    addi $t1, $t1, 1           #   ++c;
+    lb   $t4, tokens($t3)
+    sb   $0, match($t0)        #   match[t] = 0;
+    j do1_4                    # }
 
+do1_2:
+    addi $t7, $t5, -32         # if (tokens[t][c] == dictionary[i] - 32) {
+    bne  $t4, $t7, do1_3       # 
+    addi $t2, $t2, 1           #   ++i;
+    lb   $t5, dictionary($t2)
+    addi $t1, $t1, 1           #   ++c;
+    lb   $t4, tokens($t3)
+    sb   $0, match($t0)        #   match[t] = 0;
+                               # }
+    
+do1_3:
+    bne  $t5, 10, do1_4        # while (dictionary[i] != '\n'){
+    addi $t1, $0, 0            #   c = 0;  
+    addi $t7, $0, 1            #
+    sb   $t7, match($t0)       #   match[t] = 1; 
+    addi $t2, $t2, 1           #   ++i;
+    lb   $t5, dictionary($t2)
+    j do1_3                    # }
+
+do1_4:
+    mul  $t3, $t0, 201
+    #add  $t3, $t3, $t1
+    lb   $t4, tokens($t3)
+    bnez $t4, do1_5
+    j jump
+
+do1_5:
+    beq  $t4, 10, do1
+    addi $t7, $0, 1
+    sb   $t7, match($t0)       #   match[t] = 1; 
+    addi $t1, $0, 0            #   c = 0; 
+      
+    
+jump:
+    jr $ra
+    
 .globl main                     # Declare main label to be globally visible.
                                 # Needed for correct operation with MARS
+                                
+
+
+
 main:
 #-------------------------------------------------------------------------
 # Reading file block. DO NOT MODIFY THIS BLOCK
@@ -205,8 +261,8 @@ END_LOOP2:
 
     addi $t0, $0, 0                                   # will be used as a counter for iterating on content array
     addi $t3, $0, 0                                   # will be used for storing each byte in the punctuation array
-    addi $t4, $0, 0                                   # iterating on "lines" of tokens
-    addi $t6, $0, 0                                   # iterating on "columns" of tokens
+    addi $t4, $0, 0                                   # iterating on "columns" of tokens array
+    addi $t6, $0, 0                                   # iterating on "rows" of tokens array
     la   $s0, punctuations                            # store punctuations array address in $s0
     la   $s1, tokens                                  # store tokens array
     addi $s3, $0, 0                                   # store null character
@@ -228,7 +284,7 @@ reset_space:
 verify_char: 
     addi $t2, $t1, 0                                  # update the code stored in $t2        
     lb   $s2, content($t0)                            # s2 holds the current char from content array
-    beq  $s2, $s3, spell_check                        # check if you reached the end of the content array
+    beq  $s2, $s3, label                              # check if you reached the end of the content array
     bne  $s2, 32, reset_space                         # check that the current character is not a space
                                                       # if so, reset the space counter
 
@@ -283,11 +339,70 @@ store:
     addi $t4, $t4, 1                                  # iterates tokens array here
     j verify_char                                     # jump back to verify the next character in the content array
     
+
+label:
+    addi $t0, $0, 0                                   # index of current token number ("row" number == t)
+    addi $t1, $0, 0                                   # index of current character of the token ("column" number == c)
+    addi $t2, $0, 0                                   # index of current character of the dictionary (i)
+    addi $t3, $0, 0                                   # index of current character of tokens array
+    addi $t4, $0, 0                                   # current character of tokens array (tokens[t][c])
+    addi $t5, $0, 0                                   # current character of the dictionary (dictionary[i])
+    
 spell_check:
-   li   $v0, 4
-   la   $a0, tokens+402
-   syscall       
-        
+    beq  $t0, $s4, init
+    mul  $t3, $t0, 201
+    add  $t3, $t3, $t1
+    lb   $t4, tokens($t3)
+    lb   $t5, dictionary($t2)
+    beq  $t4, 0, for
+    blt  $t4, 65, match_0
+    
+    jal do1
+    
+for:
+    addi $t0, $t0, 1
+    addi $t1, $0, 0
+    addi $t2, $0, 0
+    addi $t5, $0, 0
+    j spell_check
+
+match_0:
+    sb   $0, match($t0)        #   match[t] = 0;
+    j for
+    
+              
+init:
+    addi $t0, $0, 0                                   # index of current token number ("row" number == t)
+    addi $t1, $0, 0                                   # current value of match
+    addi $t2, $0, 0                                   # index of start of "row"
+    addi $t3, $0, 0                                   # index of current character of tokens array
+    addi $t4, $0, 0                                   # current character of tokens array (tokens[t][c])
+    addi $t5, $0, 0                                   # current character of the dictionary (dictionary[i])
+   
+            
+output_tokens:
+    mul  $t2, $t0, 201
+    beq  $t0, $s4, main_end
+    lb   $t1, match($t0)                              # set $t1 to the current value of match
+    addi $t0, $t0, 1
+    bnez $t1, output_tokens_1
+    li   $v0, 4
+    la   $a0, tokens($t2)
+    syscall
+    j output_tokens
+
+output_tokens_1:
+    li   $v0, 11
+    lb   $a0, 95
+    syscall
+    li   $v0, 4
+    la   $a0, tokens($t2)
+    syscall
+    li   $v0, 11
+    lb   $a0, 95
+    syscall
+    j output_tokens
+     
 #------------------------------------------------------------------
 # Exit, DO NOT MODIFY THIS BLOCK
 #------------------------------------------------------------------
