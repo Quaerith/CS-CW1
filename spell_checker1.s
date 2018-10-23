@@ -114,7 +114,6 @@ do1:
     add  $t3, $t3, $t1
     lb   $t4, tokens($t3)
     lb   $t5, dictionary($t2)
-    #beqz $t4, jump
     beqz $t5, jump
     beqz $t4, do1_5
     bne  $t5, 10, do1_1
@@ -165,6 +164,10 @@ do1_5:
     addi $t7, $0, 1
     sb   $t7, match($t0)       #   match[t] = 1; 
     addi $t1, $0, 0            #   c = 0; 
+    mul  $t3, $t0, 201
+    add  $t3, $t3, $t1
+    lb   $t4, tokens($t3)
+    bne  $t5, 10, do1_3
     j do1  
     
 jump:
