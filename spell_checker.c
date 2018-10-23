@@ -112,7 +112,12 @@ void spell_checker() {
 			  if (tokens[t][c] == '\0' && dictionary[i] != '\n') {                                           // if the token t is shorter that the dictionary word
 				  match[t] = 1;                                                                              // reset the match value
 				  c = 0;                                                                                     // start checking again from the first character of token t
-			  }                                                                                              // this is done so that a substring of a dictionary word isn't considered a match
+				  while (dictionary[i] != '\n') {
+					  ++i;
+				  }
+			  }
+                                                                                                             // this is done so that a substring of a dictionary word isn't considered a match
+			  
 			                                                                                                 
 
 		  } while (tokens[t][c] != '\0');                                                                    // keep checking for a match in the dictionary
