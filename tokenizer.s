@@ -40,60 +40,6 @@ punctuations:          .byte ',', '.', '!', '?'    # Stores the possible punctua
 .text
 
 
-#=========================================================================
-# MACROS
-#=========================================================================
-
-macros: 
-
-# prints a space on a new line
-
-  .macro printsln()
-    la   $v0, 4
-    la   $a0, newline
-    syscall
-    la   $v0, 11
-    addi $a0, $0, 32
-    syscall
-  .end_macro
-  
-# prints a space
-
-  .macro prints()
-    la   $v0, 11
-    addi $a0, $0, 32
-    syscall
-  .end_macro
-
-# prints a newline
-    
-  .macro println()
-    la $v0, 4
-    la $a0, newline
-    syscall
-  .end_macro
-  
-# prints n spaces on a newline
-
-  .macro printsnln()
-    beqz $t5, continue
-    println()
-    loop:
-    prints()
-    addi $t5, $t5, -1
-    beqz $t5, end
-    j loop
-    end: println()
-  .end_macro
-  
-
-
-#=========================================================================
-# END_MACROS
-#=========================================================================
-
-
-
 #-------------------------------------------------------------------------
 # MAIN code block
 #-------------------------------------------------------------------------
@@ -151,7 +97,6 @@ END_LOOP:
     addi $t3, $0, 0                                   # will be used for storing each byte in the punctuation array
     addi $t4, $0, 0                                   # iterating on tokens
     la   $s0, punctuations                            # store punctuations array address in $s0
-    #la   $s1, tokens                                  # store tokens array
     addi $s3, $0, 0                                   # store null character
     
     
@@ -161,7 +106,21 @@ END_LOOP:
     j verify_char
 
 reset_space: 
-    printsnln()
+    beqz $t5, continue
+    la $v0, 4
+    la $a0, newline
+    syscall
+    loop:
+    la   $v0, 11
+    addi $a0, $0, 32
+    syscall
+    addi $t5, $t5, -1
+    beqz $t5, end
+    j loop
+    end: 
+    la $v0, 4
+    la $a0, newline
+    syscall
     addi $t5, $0, 0                                   # reseting the space counter
     j continue                                                   
 
@@ -211,7 +170,9 @@ space:
 
 new_line:
     beqz $t0, print
-    println()
+    la $v0, 4
+    la $a0, newline
+    syscall
 
 # prints a character (eventually)
 

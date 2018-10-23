@@ -45,67 +45,6 @@ punctuations:           .byte ',', '.', '!', '?'    # Stores the possible punctu
 .text
 
 
-#=========================================================================
-# MACROS
-#=========================================================================
-
-_macros:
-
-     .macro print_token()
-        li $v0, 4
-        la $a0, token
-        syscall
-     .end_macro     
-     
-     .macro mark()
-        li $v0, 11
-        lb $a0, 95
-        syscall
-        print_token()
-        li $v0, 11
-        lb $a0, 95
-        syscall
-     .end_macro
-
-# loads a space into a byte of tokens array
-          
-  .macro prints()
-    addi $a0, $0, 32
-    sb   $a0, tokens($t4)
-    addi $t4, $t4, 1
-  .end_macro
-     
-# starts populating the next "line" of tokens array
-    
-  .macro println()
-    mul  $t4, $t6, 201
-    addi $t6, $t6, 1
-  .end_macro
-  
-# populates a "line" of tokens with n spaces
-
-  .macro printsnln()
-    beqz $t5, continue
-    println()
-    addi $s4, $s4, 1                                  # tokens number increases
-    loop:
-    prints()
-    addi $t5, $t5, -1
-    beqz $t5, end
-    j loop
-    end: 
-    println()
-    addi $s4, $s4, 1                                  # tokens number increases
-  .end_macro
-
-
-
-
-#=========================================================================
-# END_MACROS
-#=========================================================================
-
-
 #-------------------------------------------------------------------------
 # MAIN code block
 #-------------------------------------------------------------------------
@@ -273,7 +212,21 @@ END_LOOP2:
     j verify_char
 
 reset_space: 
-    printsnln()
+    beqz $t5, continue
+    mul  $t4, $t6, 201
+    addi $t6, $t6, 1
+    addi $s4, $s4, 1                    # tokens number increases
+    loop:
+    addi $a0, $0, 32
+    sb   $a0, tokens($t4)
+    addi $t4, $t4, 1
+    addi $t5, $t5, -1
+    beqz $t5, end
+    j loop
+    end: 
+    mul  $t4, $t6, 201
+    addi $t6, $t6, 1
+    addi $s4, $s4, 1                    # tokens number increases
     addi $t5, $0, 0                     # resetting the space counter
     j continue                                                   
 
