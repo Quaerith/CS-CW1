@@ -110,8 +110,13 @@ _macros:
 # MAIN code block
 #-------------------------------------------------------------------------
 do1:
-    beqz $t4, jump
+    mul  $t3, $t0, 201
+    add  $t3, $t3, $t1
+    lb   $t4, tokens($t3)
+    lb   $t5, dictionary($t2)
+    #beqz $t4, jump
     beqz $t5, jump
+    beqz $t4, do1_5
     bne  $t5, 10, do1_1
     addi $t2, $t2, 1
     lb   $t5, dictionary($t2)
@@ -119,9 +124,10 @@ do1:
 do1_1:
     bne  $t4, $t5, do1_2       # if (tokens[t][c] == dictionary[i]) {
     addi $t2, $t2, 1           #   ++i;
-    lb   $t5, dictionary($t2)
+    #lb   $t5, dictionary($t2)
     addi $t1, $t1, 1           #   ++c;
-    lb   $t4, tokens($t3)
+    #add  $t3, $t3, $t1
+    #lb   $t4, tokens($t3)
     sb   $0, match($t0)        #   match[t] = 0;
     j do1_4                    # }
 
@@ -129,34 +135,37 @@ do1_2:
     addi $t7, $t5, -32         # if (tokens[t][c] == dictionary[i] - 32) {
     bne  $t4, $t7, do1_3       # 
     addi $t2, $t2, 1           #   ++i;
-    lb   $t5, dictionary($t2)
+    #lb   $t5, dictionary($t2)
     addi $t1, $t1, 1           #   ++c;
-    lb   $t4, tokens($t3)
+    #add  $t3, $t3, $t1
+    #lb   $t4, tokens($t3)
     sb   $0, match($t0)        #   match[t] = 0;
-                               # }
+    j do1_4                    # }
+     
     
 do1_3:
-    bne  $t5, 10, do1_4        # while (dictionary[i] != '\n'){
+    beq  $t5, 10, do1_4        # while (dictionary[i] != '\n'){
     addi $t1, $0, 0            #   c = 0;  
     addi $t7, $0, 1            #
     sb   $t7, match($t0)       #   match[t] = 1; 
     addi $t2, $t2, 1           #   ++i;
     lb   $t5, dictionary($t2)
+    beqz $t5, jump
     j do1_3                    # }
 
 do1_4:
-    mul  $t3, $t0, 201
+    #mul  $t3, $t0, 201
     #add  $t3, $t3, $t1
-    lb   $t4, tokens($t3)
-    bnez $t4, do1_5
-    j jump
+    #lb   $t4, tokens($t3)
+    beqz $t4, do1_5
+    j do1
 
 do1_5:
-    beq  $t4, 10, do1
+    beq  $t5, 10, jump
     addi $t7, $0, 1
     sb   $t7, match($t0)       #   match[t] = 1; 
     addi $t1, $0, 0            #   c = 0; 
-      
+    j do1  
     
 jump:
     jr $ra
@@ -393,13 +402,13 @@ output_tokens:
 
 output_tokens_1:
     li   $v0, 11
-    lb   $a0, 95
+    addi $a0, $0, 95
     syscall
     li   $v0, 4
     la   $a0, tokens($t2)
     syscall
     li   $v0, 11
-    lb   $a0, 95
+    addi $a0, $0, 95
     syscall
     j output_tokens
      
