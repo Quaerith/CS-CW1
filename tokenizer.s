@@ -150,17 +150,17 @@ continue:
 
 
 alphabetic:
-    addi $t1, $0, 1                                   # the code for an alphabetic character is 1  
     li   $v1, 32                                 
     beq  $s2, $v1, space                              # jump to the space label if the current character is a space
+    addi $t1, $0, 1                                   # the code for an alphabetic character is 1  
     bne  $t1, $t2, new_line                           # jump to the new_line label if the preceding character was a punctuation mark
     j print                                           # otherwise just print the character next to the previous one
 
 
 punctuation:
+    li   $v1, 32                                 
+    beq  $s2, $v1, space                              # jump to the space label if the current character is a space
     addi $t1, $0, 0                                   # the code for a punctuation mark is 0
-    li   $v1, 32
-    beq  $s2, $v1, space                              # jump to space label if the current character is a space
     bne  $t1, $t2, new_line                           # jump to the new_line label if the preceding character was an alphabetic one
     j print                                           # otherwise just print the character next to the previous one
     

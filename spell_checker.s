@@ -217,9 +217,11 @@ END_LOOP2:
 # Resets the space counter and "prints" n spaces 
 # on a new "row" of the tokens array
 
-reset_space: 
+reset_space:
+    li   $v1, 1 
     beqz $t5, continue
     mul  $t4, $t6, 201
+    beq  $t0, $v1, loop
     addi $t6, $t6, 1
     addi $s4, $s4, 1                    # tokens number increases
 loop:
@@ -262,17 +264,17 @@ continue:
 
 
 alphabetic:
-    addi $t1, $0, 1                     # the code for an alphabetic character is 1      
-    li   $v1, 32                             
+    li   $v1, 32                               
     beq  $s2, $v1, space                # jump to the space label if the current character is a space
+    addi $t1, $0, 1                     # the code for an alphabetic character is 1    
     bne  $t1, $t2, new_line             # jump to the new_line label if the preceding character was a punctuation mark
     j store                             # otherwise just print the character next to the previous one
 
 
 punctuation:
-    addi $t1, $0, 0                     # the code for a punctuation mark is 0
     li   $v1, 32
-    beq  $s2, $v1, space                 # jump to space label if the current character is a space
+    beq  $s2, $v1, space                # jump to space label if the current character is a space
+    addi $t1, $0, 0                     # the code for a punctuation mark is 0
     bne  $t1, $t2, new_line             # jump to the new_line label if the preceding character was an alphabetic one
     j store                             # otherwise just print the character next to the previous one
     
@@ -294,7 +296,7 @@ store:
     lb   $a0, content($t0) 
     addi $t0, $t0, 1                    # iterates content here
     li   $v1, 32
-    beq  $a0, $v1, verify_char           # if the character is a space go back to verify the next character in the array
+    beq  $a0, $v1, verify_char          # if the character is a space go back to verify the next character in the array
     sb   $a0, tokens($t4)               # stores character here
     addi $t4, $t4, 1                    # iterates tokens array here
     j verify_char                       # jump back to verify the next character in the content array

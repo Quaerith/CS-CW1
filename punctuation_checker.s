@@ -364,12 +364,16 @@ match_punct:
     addi $t6, $t3, -201                 # index of the previous token
     lb   $t5, tokens($t6)               # $t5 now used for storing the first character of the previous token   
     la   $s5, tokens($t3)               # stores the address of the current token
+    lb   $v1, 0($s5)
+    beqz $v1, match_0
     li   $v1, 32
     beq  $t5, $v1, match_1              # if the previous token is a space, match[t] = 1  
     addi $v1, $s4, -1
     beq  $t0, $v1, match_punct_2
 match_punct_1:
     la   $s5, tokens($t3)               # stores the address of the current token
+    lb   $v1, 0($s5)
+    beqz $v1, match_0
     addi $t6, $t3, 201                  # index of the next token
     lb   $t5, tokens($t6)               # stores the first character of the next token
     li   $v1, 65
