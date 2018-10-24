@@ -54,7 +54,8 @@ do1:
     lb   $t5, dictionary($t2)           #   if (dictionary[i] == '\0')
     beqz $t5, jump                      #     break;
     beqz $t4, do1_5                     #
-    bne  $t5, 10, do1_1                 #   if (dictionary[i] == '\n')
+    li   $v1, 10                        #
+    bne  $t5, $v1, do1_1                #   if (dictionary[i] == '\n')
     addi $t2, $t2, 1                    #     ++i;
     lb   $t5, dictionary($t2)           #
     
@@ -75,7 +76,8 @@ do1_2:
      
     
 do1_3:
-    beq  $t5, 10, do1_4                 #   while (dictionary[i] != '\n'){
+    li   $v1, 10
+    beq  $t5, $v1, do1_4                #   while (dictionary[i] != '\n'){
     addi $t1, $0, 0                     #     c = 0;  
     addi $t7, $0, 1                     #
     sb   $t7, match($t0)                #     match[t] = 1; 
@@ -89,14 +91,16 @@ do1_4:
     j do1
 
 do1_5:
-    beq  $t5, 10, jump                  #     if (dictionary[i] == '\n') break; 
+    li   $v1, 10
+    beq  $t5, $v1 jump                  #     if (dictionary[i] == '\n') break; 
     addi $t7, $0, 1                     #     else {  
     sb   $t7, match($t0)                #       match[t] = 1; 
     addi $t1, $0, 0                     #       c = 0; 
     mul  $t3, $t0, 201                  #     }
     add  $t3, $t3, $t1                  #
     lb   $t4, tokens($t3)               # 
-    bne  $t5, 10, do1_3                 # Jump back to start checking the next dictionary word
+    li   $v1, 10                        #
+    bne  $t5, $v1, do1_3                # Jump back to start checking the next dictionary word
                                         # if the current dictionary character is not a newline
     j do1                               # Otherwise go back to the beginning of the loop
     
@@ -218,14 +222,14 @@ reset_space:
     mul  $t4, $t6, 201
     addi $t6, $t6, 1
     addi $s4, $s4, 1                    # tokens number increases
-    loop:
+loop:
     addi $a0, $0, 32
     sb   $a0, tokens($t4)
     addi $t4, $t4, 1
     addi $t5, $t5, -1
     beqz $t5, end
     j loop
-    end: 
+end: 
     mul  $t4, $t6, 201
     addi $t6, $t6, 1
     addi $s4, $s4, 1                    # tokens number increases
@@ -238,7 +242,8 @@ verify_char:
     addi $t2, $t1, 0                    # update the code stored in $t2        
     lb   $s2, content($t0)              # s2 holds the current char from content array
     beq  $s2, $s3, label                # check if you reached the end of the content array
-    bne  $s2, 32, reset_space           # check that the current character is not a space
+    li   $v1, 32
+    bne  $s2, $v1, reset_space          # check that the current character is not a space
                                         # if so, reset the space counter
 
 # Compare the current character with the punctuation marks (stored in the first 4 bytes of $s0)
@@ -257,15 +262,17 @@ continue:
 
 
 alphabetic:
-    addi $t1, $0, 1                     # the code for an alphabetic character is 1                                   
-    beq  $s2, 32, space                 # jump to the space label if the current character is a space
+    addi $t1, $0, 1                     # the code for an alphabetic character is 1      
+    li   $v1, 32                             
+    beq  $s2, $v1, space                # jump to the space label if the current character is a space
     bne  $t1, $t2, new_line             # jump to the new_line label if the preceding character was a punctuation mark
     j store                             # otherwise just print the character next to the previous one
 
 
 punctuation:
     addi $t1, $0, 0                     # the code for a punctuation mark is 0
-    beq  $s2, 32, space                 # jump to space label if the current character is a space
+    li   $v1, 32
+    beq  $s2, $v1, space                 # jump to space label if the current character is a space
     bne  $t1, $t2, new_line             # jump to the new_line label if the preceding character was an alphabetic one
     j store                             # otherwise just print the character next to the previous one
     
@@ -286,8 +293,8 @@ new_line:
 store:
     lb   $a0, content($t0) 
     addi $t0, $t0, 1                    # iterates content here
-    
-    beq  $a0, 32, verify_char           # if the character is a space go back to verify the next character in the array
+    li   $v1, 32
+    beq  $a0, $v1, verify_char           # if the character is a space go back to verify the next character in the array
     sb   $a0, tokens($t4)               # stores character here
     addi $t4, $t4, 1                    # iterates tokens array here
     j verify_char                       # jump back to verify the next character in the content array
@@ -308,7 +315,8 @@ spell_check:
     add  $t3, $t3, $t1                  # index = row * max_word_size + col
     lb   $t4, tokens($t3)               # loads the current character in the $t4 register
     lb   $t5, dictionary($t2)           # loads the first character of the dictionary in $t5
-    blt  $t4, 65, match_0               # if the first character of the token is not alphabetical
+    li   $v1, 65
+    blt  $t4, $v1, match_0              # if the first character of the token is not alphabetical
                                         # then match[t] = 0
     
     jal do1                             # otherwise, check to see if the word is spelled correctly 

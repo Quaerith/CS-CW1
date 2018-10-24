@@ -107,19 +107,19 @@ END_LOOP:
 
 reset_space: 
     beqz $t5, continue
-    la $v0, 4
-    la $a0, newline
+    li   $v0, 4
+    la   $a0, newline
     syscall
-    loop:
-    la   $v0, 11
+loop:
+    li   $v0, 11
     addi $a0, $0, 32
     syscall
     addi $t5, $t5, -1
     beqz $t5, end
     j loop
-    end: 
-    la $v0, 4
-    la $a0, newline
+end: 
+    li   $v0, 4
+    la   $a0, newline
     syscall
     addi $t5, $0, 0                                   # reseting the space counter
     j continue                                                   
@@ -130,7 +130,8 @@ verify_char:
     addi $t2, $t1, 0                                  # update the code stored in $t2        
     lb   $s2, content($t0)                            # s2 holds the current char from content array
     beq  $s2, $s3, main_end                           # check if you reached the end of the content array
-    bne  $s2, 32, reset_space                         # check that the current character is not a space
+    li   $v1, 32
+    bne  $s2, $v1, reset_space                        # check that the current character is not a space
                                                       # if so, reset the space counter
 
 # compare the current character with the punctuation marks (stored in the first 4 bytes of $s0)
@@ -149,15 +150,17 @@ continue:
 
 
 alphabetic:
-    addi $t1, $0, 1                                   # the code for an alphabetic character is 1                                   
-    beq  $s2, 32, space                               # jump to the space label if the current character is a space
+    addi $t1, $0, 1                                   # the code for an alphabetic character is 1  
+    li   $v1, 32                                 
+    beq  $s2, $v1, space                              # jump to the space label if the current character is a space
     bne  $t1, $t2, new_line                           # jump to the new_line label if the preceding character was a punctuation mark
     j print                                           # otherwise just print the character next to the previous one
 
 
 punctuation:
     addi $t1, $0, 0                                   # the code for a punctuation mark is 0
-    beq  $s2, 32, space                               # jump to space label if the current character is a space
+    li   $v1, 32
+    beq  $s2, $v1, space                              # jump to space label if the current character is a space
     bne  $t1, $t2, new_line                           # jump to the new_line label if the preceding character was an alphabetic one
     j print                                           # otherwise just print the character next to the previous one
     
@@ -170,17 +173,18 @@ space:
 
 new_line:
     beqz $t0, print
-    la $v0, 4
+    li $v0, 4
     la $a0, newline
     syscall
 
 # prints a character (eventually)
 
 print:
-    la   $v0, 11
+    li   $v0, 11
     lb   $a0, content($t0) 
     addi $t0, $t0, 1                                  # iterates here
-    beq  $a0, 32, verify_char                         # if the character is a space go back to verify the next character in the array
+    li   $v1, 32
+    beq  $a0, $v1, verify_char                        # if the character is a space go back to verify the next character in the array
     syscall                                           # prints the character here
     j verify_char                                     # jump back to verify the next character in the array
     
