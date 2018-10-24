@@ -232,9 +232,11 @@ END_LOOP2:
 # Resets the space counter and "prints" n spaces 
 # on a new "row" of the tokens array
 
-reset_space: 
+reset_space:
+    li   $v1, 1 
     beqz $t5, continue
     mul  $t4, $t6, 201
+    beq  $t0, $v1, loop
     addi $t6, $t6, 1
     addi $s4, $s4, 1                    # tokens number increases
 loop:
@@ -277,17 +279,17 @@ continue:
 
 
 alphabetic:
-    addi $t1, $0, 1                     # the code for an alphabetic character is 1    
     li   $v1, 32                               
     beq  $s2, $v1, space                # jump to the space label if the current character is a space
+    addi $t1, $0, 1                     # the code for an alphabetic character is 1    
     bne  $t1, $t2, new_line             # jump to the new_line label if the preceding character was a punctuation mark
     j store                             # otherwise just print the character next to the previous one
 
 
 punctuation:
-    addi $t1, $0, 0                     # the code for a punctuation mark is 0
     li   $v1, 32
     beq  $s2, $v1, space                # jump to space label if the current character is a space
+    addi $t1, $0, 0                     # the code for a punctuation mark is 0
     bne  $t1, $t2, new_line             # jump to the new_line label if the preceding character was an alphabetic one
     j store                             # otherwise just print the character next to the previous one
     
@@ -358,16 +360,21 @@ match_1:
 match_punct:
     li   $v1, 32
     beq  $t4, $v1, match_0
-    beqz $t0, match_1
+    beqz $t0, match_punct_1
     addi $t6, $t3, -201                 # index of the previous token
     lb   $t5, tokens($t6)               # $t5 now used for storing the first character of the previous token   
     la   $s5, tokens($t3)               # stores the address of the current token
     li   $v1, 32
     beq  $t5, $v1, match_1              # if the previous token is a space, match[t] = 1  
+    addi $v1, $s4, -1
+    beq  $t0, $v1, match_punct_2
+match_punct_1:
+    la   $s5, tokens($t3)               # stores the address of the current token
     addi $t6, $t3, 201                  # index of the next token
     lb   $t5, tokens($t6)               # stores the first character of the next token
     li   $v1, 65
     bge  $t5, $v1, match_1              # if the next token is alphabetic, match[t] = 1
+match_punct_2: 
     lb   $t7, 1($s5)
     beqz $t7, match_0                   # if the token is a single punctuation, match[t] = 0 
     jal is_ellipsis                     # verifies if the current token is an ellipsis
